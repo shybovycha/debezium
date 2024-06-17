@@ -9,6 +9,7 @@ public class CustomJdbcObjectNameQuoter {
      * @return The name of object between square brackets if not allowed as-is.
      */
     public static String quoteNameIfNecessary(String name) {
+        // TODO: configure these symbols
         if (name.contains("!") ||
                 name.contains("%") ||
                 name.contains("^") ||

@@ -26,16 +26,20 @@ import io.debezium.util.BoundedConcurrentHashMap;
 public class CustomJdbcConnection extends JdbcConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomJdbcConnection.class);
 
+    // TODO: configure these queries
     private static final String GET_DATABASE_NAME = "select db_name()";
     public static final String GET_DATE = "SELECT GETDATE( )";
 
+    // TODO: configure these symbols
     private static final String OPENING_QUOTED_CHARACTER = "[";
     private static final String CLOSING_QUOTED_CHARACTER = "]";
 
+    // TODO: configure this
     private static final String URL_PATTERN = "jdbc:jtds:sybase://${" + JdbcConfiguration.HOSTNAME + "}:${" + JdbcConfiguration.PORT + "}/${" + JdbcConfiguration.DATABASE
             + "}";
 
     private static final ConnectionFactory FACTORY = JdbcConnection.patternBasedFactory(URL_PATTERN,
+            // TODO: configure driver class
             Driver.class.getName(),
             CustomJdbcConnection.class.getClassLoader(),
             JdbcConfiguration.PORT.withDefault(CustomJdbcConnectorConfig.PORT.defaultValueAsString()));

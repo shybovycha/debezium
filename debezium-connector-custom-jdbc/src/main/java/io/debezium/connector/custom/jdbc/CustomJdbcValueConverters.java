@@ -38,6 +38,7 @@ public class CustomJdbcValueConverters extends JdbcValueConverters {
 
     @Override
     public SchemaBuilder schemaBuilder(Column column) {
+        // TODO: configure these type conversions
         switch (column.jdbcType()) {
             // Numeric integers
             case Types.TINYINT:
@@ -50,6 +51,7 @@ public class CustomJdbcValueConverters extends JdbcValueConverters {
 
     @Override
     public ValueConverter converter(Column column, Field fieldDefn) {
+        // TODO: configure these type conversions
         switch (column.jdbcType()) {
             // Numeric integers
             case Types.TINYINT:
@@ -60,9 +62,6 @@ public class CustomJdbcValueConverters extends JdbcValueConverters {
         }
     }
 
-    /**
-     * TODO: Research CustomJdbc time preceision
-     */
     @Override
     protected int getTimePrecision(Column column) {
         return column.scale().get();
@@ -96,6 +95,7 @@ public class CustomJdbcValueConverters extends JdbcValueConverters {
         return super.convertBinary(column, fieldDefn, data, mode);
     }
 
+    // TODO: configure the timestamp format?
     protected Object convertTimestampWithZone(Column column, Field fieldDefn, Object data) {
         // dummy return
         return super.convertTimestampWithZone(column, fieldDefn, data);

@@ -348,6 +348,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
 
         Map<TableId, String> snapshotSelectOverridesByTable = new HashMap<>();
 
+        // TODO: configure this as a template
         for (String table : tableList.split(",")) {
             snapshotSelectOverridesByTable.put(
                     TableId.parse(table, new CustomJdbcTableIdPredicate()),
