@@ -128,6 +128,7 @@ public class CustomJdbcDefaultValueConverter implements DefaultValueConverter {
         };
     }
 
+    // TODO: configure these values
     public static DefaultValueMapper booleanDefaultValueMapper() {
         return (column, value) -> {
             if ("1".equals(value.trim())) {
@@ -140,6 +141,7 @@ public class CustomJdbcDefaultValueConverter implements DefaultValueConverter {
         };
     }
 
+    // TODO: configure these functions/queries
     private static DefaultValueMapper castTemporalFunctionCall(CustomJdbcConnection connection, int jdbcType) {
         return (column, value) -> {
             if ("CURRENT DATE".equalsIgnoreCase(value.trim())) {
@@ -192,6 +194,7 @@ public class CustomJdbcDefaultValueConverter implements DefaultValueConverter {
         return (column, value) -> value != null ? unquote(value) : null;
     }
 
+    // TODO: configure these symbols
     private static String unquote(String value) {
         if (value.startsWith("('") && value.endsWith("')")) {
             return value.substring(2, value.length() - 2);

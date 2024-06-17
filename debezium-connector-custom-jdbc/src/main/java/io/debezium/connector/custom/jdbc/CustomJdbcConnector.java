@@ -66,6 +66,7 @@ public class CustomJdbcConnector extends RelationalBaseSourceConnector {
         try (CustomJdbcConnection connection = new CustomJdbcConnection(connectorConfig.getJdbcConfig())) {
             try {
                 connection.connect();
+                // TODO: configure this query
                 connection.execute(" select @@version");
                 LOGGER.info("Successfully tested connection for {} with user '{}'", connection.connectionString(), connection.username());
             }

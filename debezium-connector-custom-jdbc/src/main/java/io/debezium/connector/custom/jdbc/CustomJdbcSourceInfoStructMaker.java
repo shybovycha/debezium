@@ -14,7 +14,7 @@ public class CustomJdbcSourceInfoStructMaker extends AbstractSourceInfoStructMak
     public void init(String connector, String version, CommonConnectorConfig connectorConfig) {
         super.init(connector, version, connectorConfig);
         schema = commonSchemaBuilder()
-                .name("io.debezium.connector.sybase.Source")
+                .name("io.debezium.connector.custom.jdbc.Source")
                 .field(SourceInfo.SCHEMA_NAME_KEY, Schema.STRING_SCHEMA)
                 .field(SourceInfo.TABLE_NAME_KEY, Schema.STRING_SCHEMA)
                 .field(SourceInfo.CHANGE_LSN_KEY, Schema.OPTIONAL_STRING_SCHEMA)
