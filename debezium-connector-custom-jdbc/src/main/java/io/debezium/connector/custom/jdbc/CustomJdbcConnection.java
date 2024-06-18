@@ -1,6 +1,5 @@
 package io.debezium.connector.custom.jdbc;
 
-import java.sql.Driver;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,23 +25,12 @@ import io.debezium.util.BoundedConcurrentHashMap;
 public class CustomJdbcConnection extends JdbcConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomJdbcConnection.class);
 
-    // TODO: configure these queries
-    private static final String GET_DATABASE_NAME = "select db_name()";
-    public static final String GET_DATE = "SELECT GETDATE( )";
+    private final String GET_DATABASE_NAME;
+    private final String GET_DATE;
 
-    // TODO: configure these symbols
-    private static final String OPENING_QUOTED_CHARACTER = "[";
-    private static final String CLOSING_QUOTED_CHARACTER = "]";
+    private final String URL_PATTERN;
 
-    // TODO: configure this
-    private static final String URL_PATTERN = "jdbc:jtds:sybase://${" + JdbcConfiguration.HOSTNAME + "}:${" + JdbcConfiguration.PORT + "}/${" + JdbcConfiguration.DATABASE
-            + "}";
-
-    private static final ConnectionFactory FACTORY = JdbcConnection.patternBasedFactory(URL_PATTERN,
-            // TODO: configure driver class
-            Driver.class.getName(),
-            CustomJdbcConnection.class.getClassLoader(),
-            JdbcConfiguration.PORT.withDefault(CustomJdbcConnectorConfig.PORT.defaultValueAsString()));
+    private final CustomJdbcConnectorConfig connectorConfig;
 
     /**
      * actual name of the database, which could differ in casing from the database name given in the connector config.
@@ -56,10 +44,27 @@ public class CustomJdbcConnection extends JdbcConnection {
      *
      * @param config {@link Configuration} instance, may not be null.
      */
-    public CustomJdbcConnection(JdbcConfiguration config) {
-        super(config, FACTORY, OPENING_QUOTED_CHARACTER, CLOSING_QUOTED_CHARACTER);
+    public CustomJdbcConnection(CustomJdbcConnectorConfig config) {
+        super(
+            config.getJdbcConfig(),
+            JdbcConnection.patternBasedFactory(
+                config.getJdbcUriTemplate(),
+                config.getJdbcDriverClassName(),
+                CustomJdbcConnection.class.getClassLoader(),
+                JdbcConfiguration.PORT.withDefault(CustomJdbcConnectorConfig.PORT.defaultValueAsString())),
+            config.getEscapeCharOpening(),
+            config.getEscapeCharClosing()
+        );
+
         lsnToInstantCache = new BoundedConcurrentHashMap<>(100);
         realDatabaseName = retrieveRealDatabaseName();
+
+        URL_PATTERN = config.getJdbcUriTemplate();
+
+        GET_DATABASE_NAME = config.getQuery_getDatabaseName();
+        GET_DATE = config.getQuery_getTimestamp();
+
+        connectorConfig = config;
     }
 
     /**
@@ -109,9 +114,9 @@ public class CustomJdbcConnection extends JdbcConnection {
     public String quotedTableIdString(TableId tableId) {
         StringBuilder quoted = new StringBuilder();
         if (tableId.schema() != null && !tableId.schema().isEmpty()) {
-            quoted.append(CustomJdbcObjectNameQuoter.quoteNameIfNecessary(tableId.schema())).append(".");
+            quoted.append(CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.schema())).append(".");
         }
-        quoted.append(CustomJdbcObjectNameQuoter.quoteNameIfNecessary(tableId.table()));
+        quoted.append(CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.table()));
         return quoted.toString();
     }
 

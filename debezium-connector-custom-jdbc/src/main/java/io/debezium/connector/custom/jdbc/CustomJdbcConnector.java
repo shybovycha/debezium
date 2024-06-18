@@ -63,11 +63,10 @@ public class CustomJdbcConnector extends RelationalBaseSourceConnector {
         ConfigValue hostnameValue = configValues.get(RelationalDatabaseConnectorConfig.HOSTNAME.name());
         // Try to connect to the database ...
         CustomJdbcConnectorConfig connectorConfig = new CustomJdbcConnectorConfig(config);
-        try (CustomJdbcConnection connection = new CustomJdbcConnection(connectorConfig.getJdbcConfig())) {
+        try (CustomJdbcConnection connection = new CustomJdbcConnection(connectorConfig)) {
             try {
                 connection.connect();
-                // TODO: configure this query
-                connection.execute(" select @@version");
+                connection.execute(config.getString(CustomJdbcConnectorConfig.QUERIES_PING));
                 LOGGER.info("Successfully tested connection for {} with user '{}'", connection.connectionString(), connection.username());
             }
             catch (SQLException e) {
