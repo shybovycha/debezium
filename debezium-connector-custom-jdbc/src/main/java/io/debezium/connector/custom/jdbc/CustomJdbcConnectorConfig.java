@@ -1,3 +1,9 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
+
 package io.debezium.connector.custom.jdbc;
 
 import java.util.Collections;
@@ -7,7 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.debezium.relational.TableIdPredicates;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Width;
@@ -25,6 +30,7 @@ import io.debezium.relational.ColumnFilterMode;
 import io.debezium.relational.HistorizedRelationalDatabaseConnectorConfig;
 import io.debezium.relational.RelationalDatabaseConnectorConfig;
 import io.debezium.relational.TableId;
+import io.debezium.relational.TableIdPredicates;
 import io.debezium.relational.Tables.TableFilter;
 import io.debezium.relational.history.HistoryRecordComparator;
 import io.debezium.spi.schema.DataCollectionId;
@@ -238,97 +244,97 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
             .withDefault(DEFAULT_QUERY_FETCH_SIZE);
 
     public static final Field JDBC_DRIVER_CLASS = Field.create("jdbc.driver.class")
-        .withDisplayName("JDBC driver class")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTION, 2))
-        .withWidth(Width.MEDIUM)
-        .withImportance(Importance.HIGH)
-        .required()
-//        .withValidation(RelationalDatabaseConnectorConfig::validateHostname)
-        .withDescription("JDBC driver class name. Class must be available on the classpath.");
+            .withDisplayName("JDBC driver class")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTION, 2))
+            .withWidth(Width.MEDIUM)
+            .withImportance(Importance.HIGH)
+            .required()
+            // .withValidation(RelationalDatabaseConnectorConfig::validateHostname)
+            .withDescription("JDBC driver class name. Class must be available on the classpath.");
 
     public static final Field JDBC_URI_TEMPLATE = Field.create("jdbc.uri.template")
-        .withDisplayName("JDBC URI template")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTION, 2))
-        .withWidth(Width.MEDIUM)
-        .withImportance(Importance.HIGH)
-        .required()
-//        .withValidation(RelationalDatabaseConnectorConfig::validateHostname)
-        .withDescription("JDBC URI template. Driver-specific.");
+            .withDisplayName("JDBC URI template")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTION, 2))
+            .withWidth(Width.MEDIUM)
+            .withImportance(Importance.HIGH)
+            .required()
+            // .withValidation(RelationalDatabaseConnectorConfig::validateHostname)
+            .withDescription("JDBC URI template. Driver-specific.");
 
     public static final Field QUERYING_ESCAPE_CHAR_OPENING = Field.create("querying.escape.char.opening")
-        .withDisplayName("Opening escape character")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
-        .withWidth(Width.SHORT)
-        .withImportance(Importance.MEDIUM)
-        .required();
+            .withDisplayName("Opening escape character")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withWidth(Width.SHORT)
+            .withImportance(Importance.MEDIUM)
+            .required();
 
     public static final Field QUERYING_ESCAPE_CHAR_CLOSING = Field.create("querying.escape.char.closing")
-        .withDisplayName("Closing escape character")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
-        .withWidth(Width.SHORT)
-        .withImportance(Importance.MEDIUM)
-        .required();
+            .withDisplayName("Closing escape character")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withWidth(Width.SHORT)
+            .withImportance(Importance.MEDIUM)
+            .required();
 
     public static final Field QUERYING_BOOLEAN_TRUE_VALUE = Field.create("querying.boolean.true.value")
-        .withDisplayName("Value conforming to boolean True")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
-        .withWidth(Width.MEDIUM)
-        .withImportance(Importance.MEDIUM)
-        .required();
+            .withDisplayName("Value conforming to boolean True")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withWidth(Width.MEDIUM)
+            .withImportance(Importance.MEDIUM)
+            .required();
 
     public static final Field QUERYING_BOOLEAN_FALSE_VALUE = Field.create("querying.boolean.false.value")
-        .withDisplayName("Value conforming to boolean False")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
-        .withWidth(Width.MEDIUM)
-        .withImportance(Importance.MEDIUM)
-        .required();
+            .withDisplayName("Value conforming to boolean False")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withWidth(Width.MEDIUM)
+            .withImportance(Importance.MEDIUM)
+            .required();
 
     public static final Field QUERYING_SPECIAL_CHARACTERS = Field.create("querying.special.characters")
-        .withDisplayName("Special characters which need escaping")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
-        .withWidth(Width.MEDIUM)
-        .withImportance(Importance.MEDIUM)
-        .required();
+            .withDisplayName("Special characters which need escaping")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withWidth(Width.MEDIUM)
+            .withImportance(Importance.MEDIUM)
+            .required();
 
     public static final Field QUERIES_GET_DATABASE_NAME = Field.create("queries.get.database.name")
-        .withDisplayName("Query to retrieve DB name")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
-        .withWidth(Width.MEDIUM)
-        .withImportance(Importance.MEDIUM)
-        .required();
+            .withDisplayName("Query to retrieve DB name")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withWidth(Width.MEDIUM)
+            .withImportance(Importance.MEDIUM)
+            .required();
 
     public static final Field QUERIES_GET_TIMESTAMP = Field.create("queries.get.date")
-        .withDisplayName("Query to get current timestamp")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
-        .withWidth(Width.MEDIUM)
-        .withImportance(Importance.MEDIUM)
-        .required();
+            .withDisplayName("Query to get current timestamp")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withWidth(Width.MEDIUM)
+            .withImportance(Importance.MEDIUM)
+            .required();
 
     public static final Field QUERIES_PING = Field.create("queries.ping")
-        .withDisplayName("Query to check if a connection succeeded")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
-        .withWidth(Width.MEDIUM)
-        .withImportance(Importance.MEDIUM)
-        .required();
+            .withDisplayName("Query to check if a connection succeeded")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withWidth(Width.MEDIUM)
+            .withImportance(Importance.MEDIUM)
+            .required();
 
     public static final Field QUERIES_SELECT_FIELDS_FROM_COLLECTION = Field.create("queries.select.fields.from.collection")
-        .withDisplayName("Query to select specified fields from collection")
-        .withType(ConfigDef.Type.STRING)
-        .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
-        .withWidth(Width.MEDIUM)
-        .withImportance(Importance.MEDIUM)
-        .withDescription("Query template to select specified fields from collection. Use ${fields}, ${collection}, ${schema} to interpolate corresponding values.")
-        .required();
+            .withDisplayName("Query to select specified fields from collection")
+            .withType(ConfigDef.Type.STRING)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withWidth(Width.MEDIUM)
+            .withImportance(Importance.MEDIUM)
+            .withDescription("Query template to select specified fields from collection. Use ${fields}, ${collection}, ${schema} to interpolate corresponding values.")
+            .required();
 
     public static final Field SOURCE_INFO_STRUCT_MAKER = CommonConnectorConfig.SOURCE_INFO_STRUCT_MAKER
             .withDefault(CustomJdbcSourceInfoStructMaker.class.getName());
@@ -456,9 +462,8 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
         Map<TableId, String> snapshotSelectOverridesByTable = new HashMap<>();
 
         TableIdPredicates tableSeparatorPredicate = new CustomJdbcTableIdPredicate(
-            getEscapeCharOpening().charAt(0),
-            getEscapeCharClosing().charAt(0)
-        );
+                getEscapeCharOpening().charAt(0),
+                getEscapeCharClosing().charAt(0));
 
         for (String table : tableList.split(",")) {
             snapshotSelectOverridesByTable.put(
@@ -508,9 +513,9 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
 
     public Set<String> getSpecialCharacters() {
         return getConfig().getString(QUERYING_SPECIAL_CHARACTERS)
-            .chars()
-            .mapToObj(code -> String.valueOf((char) code))
-            .collect(Collectors.toSet());
+                .chars()
+                .mapToObj(code -> String.valueOf((char) code))
+                .collect(Collectors.toSet());
     }
 
     public String getQuery_selectFieldsFromCollection() {

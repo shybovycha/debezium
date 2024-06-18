@@ -1,3 +1,9 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
+
 package io.debezium.connector.custom.jdbc;
 
 import org.slf4j.Logger;
@@ -25,7 +31,7 @@ public class CustomJdbcDatabaseSchema extends HistorizedRelationalDatabaseSchema
         super(connectorConfig, topicNamingStrategy, connectorConfig.getTableFilters().dataCollectionFilter(), connectorConfig.getColumnFilter(),
                 new TableSchemaBuilder(
                         valueConverters,
-                        new CustomJdbcDefaultValueConverter(valueConverters, connection),
+                        new CustomJdbcDefaultValueConverter(connectorConfig, valueConverters, connection),
                         schemaNameAdjuster,
                         connectorConfig.customConverterRegistry(),
                         connectorConfig.getSourceInfoStructMaker().schema(),
