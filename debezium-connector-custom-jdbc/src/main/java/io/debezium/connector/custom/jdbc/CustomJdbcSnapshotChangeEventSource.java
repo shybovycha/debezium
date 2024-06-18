@@ -225,9 +225,13 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
     protected Optional<String> getSnapshotSelect(RelationalSnapshotContext<CustomJdbcPartition, CustomJdbcOffsetContext> snapshotContext, TableId tableId,
                                                  List<String> columns) {
         String snapshotSelectColumns = String.join(", ", columns);
-        // TODO: configure this query
-        return Optional.of(String.format("SELECT %s FROM %s.%s", snapshotSelectColumns, CustomJdbcObjectNameQuoter.quoteNameIfNecessary(tableId.schema()),
-                CustomJdbcObjectNameQuoter.quoteNameIfNecessary(tableId.table())));
+        String queryTemplate = connectorConfig.getQuery_selectFieldsFromCollection();
+        return Optional.of(
+            queryTemplate
+                .replace("${fields}", snapshotSelectColumns)
+                .replace("${schema}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.schema()))
+                .replace("${collection}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.table()))
+        );
     }
 
     /**

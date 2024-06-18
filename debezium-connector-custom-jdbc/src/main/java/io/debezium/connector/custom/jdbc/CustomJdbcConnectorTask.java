@@ -56,7 +56,7 @@ public class CustomJdbcConnectorTask extends BaseSourceTask<CustomJdbcPartition,
         final SchemaNameAdjuster schemaNameAdjuster = connectorConfig.schemaNameAdjuster();
 
         MainConnectionProvidingConnectionFactory<CustomJdbcConnection> connectionFactory = new DefaultMainConnectionProvidingConnectionFactory<>(
-                () -> new CustomJdbcConnection(connectorConfig.getJdbcConfig()));
+                () -> new CustomJdbcConnection(connectorConfig));
         dataConnection = connectionFactory.mainConnection();
         metadataConnection = connectionFactory.newConnection();
 

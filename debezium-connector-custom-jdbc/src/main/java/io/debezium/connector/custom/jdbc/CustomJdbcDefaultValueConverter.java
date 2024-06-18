@@ -27,10 +27,12 @@ public class CustomJdbcDefaultValueConverter implements DefaultValueConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomJdbcDefaultValueConverter.class);
 
+    private final CustomJdbcConnectorConfig config;
     private final CustomJdbcValueConverters valueConverters;
     private final Map<Integer, DefaultValueMapper> defaultValueMappers;
 
-    public CustomJdbcDefaultValueConverter(CustomJdbcValueConverters valueConverters, CustomJdbcConnection jdbcConnection) {
+    public CustomJdbcDefaultValueConverter(CustomJdbcConnectorConfig config, CustomJdbcValueConverters valueConverters, CustomJdbcConnection jdbcConnection) {
+        this.config = config;
         this.valueConverters = valueConverters;
         this.defaultValueMappers = Collections.unmodifiableMap(createDefaultValueMappers(jdbcConnection));
     }
@@ -80,7 +82,7 @@ public class CustomJdbcDefaultValueConverter implements DefaultValueConverter {
         return defaultValue;
     }
 
-    private static Map<Integer, DefaultValueMapper> createDefaultValueMappers(CustomJdbcConnection connection) {
+    private Map<Integer, DefaultValueMapper> createDefaultValueMappers(CustomJdbcConnection connection) {
         // Data types that are supported should be registered in the map.
         final Map<Integer, DefaultValueMapper> result = new HashMap<>();
 
@@ -128,13 +130,12 @@ public class CustomJdbcDefaultValueConverter implements DefaultValueConverter {
         };
     }
 
-    // TODO: configure these values
-    public static DefaultValueMapper booleanDefaultValueMapper() {
+    public DefaultValueMapper booleanDefaultValueMapper() {
         return (column, value) -> {
-            if ("1".equals(value.trim())) {
+            if (config.getBooleanTrueValue().equals(value.trim())) {
                 return true;
             }
-            else if ("0".equals(value.trim())) {
+            else if (config.getBooleanFalseValue().equals(value.trim())) {
                 return false;
             }
             return Boolean.parseBoolean(value.trim());
