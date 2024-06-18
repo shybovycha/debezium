@@ -227,11 +227,10 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
         String snapshotSelectColumns = String.join(", ", columns);
         String queryTemplate = connectorConfig.getQuery_selectFieldsFromCollection();
         return Optional.of(
-            queryTemplate
-                .replace("${fields}", snapshotSelectColumns)
-                .replace("${schema}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.schema()))
-                .replace("${collection}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.table()))
-        );
+                queryTemplate
+                        .replace("${fields}", snapshotSelectColumns)
+                        .replace("${schema}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.schema()))
+                        .replace("${collection}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.table())));
     }
 
     /**

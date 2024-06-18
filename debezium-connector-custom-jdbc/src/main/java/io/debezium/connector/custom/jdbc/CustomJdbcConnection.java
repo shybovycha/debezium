@@ -1,3 +1,9 @@
+/*
+ * Copyright Debezium Authors.
+ *
+ * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ */
+
 package io.debezium.connector.custom.jdbc;
 
 import java.sql.PreparedStatement;
@@ -46,15 +52,14 @@ public class CustomJdbcConnection extends JdbcConnection {
      */
     public CustomJdbcConnection(CustomJdbcConnectorConfig config) {
         super(
-            config.getJdbcConfig(),
-            JdbcConnection.patternBasedFactory(
-                config.getJdbcUriTemplate(),
-                config.getJdbcDriverClassName(),
-                CustomJdbcConnection.class.getClassLoader(),
-                JdbcConfiguration.PORT.withDefault(CustomJdbcConnectorConfig.PORT.defaultValueAsString())),
-            config.getEscapeCharOpening(),
-            config.getEscapeCharClosing()
-        );
+                config.getJdbcConfig(),
+                JdbcConnection.patternBasedFactory(
+                        config.getJdbcUriTemplate(),
+                        config.getJdbcDriverClassName(),
+                        CustomJdbcConnection.class.getClassLoader(),
+                        JdbcConfiguration.PORT.withDefault(CustomJdbcConnectorConfig.PORT.defaultValueAsString())),
+                config.getEscapeCharOpening(),
+                config.getEscapeCharClosing());
 
         lsnToInstantCache = new BoundedConcurrentHashMap<>(100);
         realDatabaseName = retrieveRealDatabaseName();
