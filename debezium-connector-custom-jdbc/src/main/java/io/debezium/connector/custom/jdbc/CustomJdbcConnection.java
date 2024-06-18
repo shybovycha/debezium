@@ -61,15 +61,15 @@ public class CustomJdbcConnection extends JdbcConnection {
                 config.getEscapeCharOpening(),
                 config.getEscapeCharClosing());
 
-        lsnToInstantCache = new BoundedConcurrentHashMap<>(100);
-        realDatabaseName = retrieveRealDatabaseName();
-
         URL_PATTERN = config.getJdbcUriTemplate();
 
         GET_DATABASE_NAME = config.getQuery_getDatabaseName();
         GET_DATE = config.getQuery_getTimestamp();
 
         connectorConfig = config;
+
+        lsnToInstantCache = new BoundedConcurrentHashMap<>(100);
+        realDatabaseName = retrieveRealDatabaseName();
     }
 
     /**

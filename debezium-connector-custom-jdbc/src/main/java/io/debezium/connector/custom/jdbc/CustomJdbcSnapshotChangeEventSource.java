@@ -5,7 +5,6 @@
  */
 package io.debezium.connector.custom.jdbc;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.List;
@@ -100,8 +99,8 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
                                                RelationalSnapshotContext<CustomJdbcPartition, CustomJdbcOffsetContext> snapshotContext)
             throws SQLException {
 
-        jdbcConnection.connection().setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-        LOGGER.info("Schema locking was disabled in connector configuration");
+        // jdbcConnection.connection().setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+        // LOGGER.info("Schema locking was disabled in connector configuration");
 
         // TODO?
         // SnapshotIsolationMode isolationMode = connectorConfig.getSnapshotLockingMode()
@@ -132,13 +131,13 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
     protected void releaseSchemaSnapshotLocks(RelationalSnapshotContext<CustomJdbcPartition, CustomJdbcOffsetContext> snapshotContext) throws SQLException {
         // Exclusive mode: locks should be kept until the end of transaction.
         // read_uncommitted mode; read_committed mode: no locks have been acquired.
-        // TODO: since assuming read_committed, this is not needed
         // boolean useSnapshotLocking = connectorConfig.getSnapshotLockingMode()
-        // .filter(mode -> mode == SnapshotIsolationMode.REPEATABLE_READ)
+        // .filter(mode -> mode == CustomJdbcConnectorConfig.SnapshotIsolationMode.REPEATABLE_READ)
         // .isPresent();
         //
         // if (useSnapshotLocking) {
-        // jdbcConnection.connection().rollback(((CustomJdbcSnapshotContext) snapshotContext).preSchemaSnapshotSavepoint);
+        // jdbcConnection.connection()
+        // .rollback(((CustomJdbcSnapshotContext) snapshotContext).preSchemaSnapshotSavepoint);
         // LOGGER.info("Schema locks released.");
         // }
     }

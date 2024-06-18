@@ -15,8 +15,12 @@ import java.time.ZoneOffset;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.errors.DataException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.debezium.config.CommonConnectorConfig;
+import io.debezium.data.SpecialValueDecimal;
+import io.debezium.data.VariableScaleDecimal;
 import io.debezium.jdbc.JdbcValueConverters;
 import io.debezium.jdbc.TemporalPrecisionMode;
 import io.debezium.relational.Column;
@@ -24,6 +28,15 @@ import io.debezium.relational.ValueConverter;
 
 // TODO: Important - need to reimplement this to suit CustomJdbc
 public class CustomJdbcValueConverters extends JdbcValueConverters {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomJdbcValueConverters.class);
+
+    /**
+     * Variable scale decimal/numeric is defined by metadata
+     * scale - 0
+     * length - 131089
+     */
+    private static final int VARIABLE_SCALE_DECIMAL_LENGTH = 131089;
+
     /**
      * Create a new instance that always uses UTC for the default time zone when
      * converting values without timezone information to values that require
@@ -44,9 +57,13 @@ public class CustomJdbcValueConverters extends JdbcValueConverters {
 
     @Override
     public SchemaBuilder schemaBuilder(Column column) {
+        LOGGER.info("Converting column {} ({}) into schema", column.name(), column.jdbcType());
+
         // TODO: configure these type conversions
         switch (column.jdbcType()) {
             // Numeric integers
+            case Types.NUMERIC:
+                return numericSchema(column);
             case Types.TINYINT:
                 // values are an 8-bit unsigned integer value between 0 and 255, we thus need to store it in short int
                 return SchemaBuilder.int16();
@@ -57,6 +74,8 @@ public class CustomJdbcValueConverters extends JdbcValueConverters {
 
     @Override
     public ValueConverter converter(Column column, Field fieldDefn) {
+        LOGGER.info("Converting column {} ({}) value", column.name(), column.jdbcType());
+
         // TODO: configure these type conversions
         switch (column.jdbcType()) {
             // Numeric integers
@@ -105,5 +124,18 @@ public class CustomJdbcValueConverters extends JdbcValueConverters {
     protected Object convertTimestampWithZone(Column column, Field fieldDefn, Object data) {
         // dummy return
         return super.convertTimestampWithZone(column, fieldDefn, data);
+    }
+
+    private SchemaBuilder numericSchema(Column column) {
+        if (decimalMode == DecimalMode.PRECISE && isVariableScaleDecimal(column)) {
+            return VariableScaleDecimal.builder();
+        }
+
+        return SpecialValueDecimal.builder(decimalMode, column.length(), column.scale().orElse(0));
+    }
+
+    private boolean isVariableScaleDecimal(Column column) {
+        return (column.length() == 0 || column.length() == VARIABLE_SCALE_DECIMAL_LENGTH) &&
+                column.scale().orElseGet(() -> 0) == 0;
     }
 }
