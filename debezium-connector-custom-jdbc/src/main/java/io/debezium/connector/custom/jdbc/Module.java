@@ -12,7 +12,7 @@ import io.debezium.util.IoUtil;
 
 public final class Module {
 
-    private static final Properties INFO = IoUtil.loadProperties(Module.class, "io/debezium/connector/jdbc/build.version");
+    private static final Properties INFO = IoUtil.loadProperties(Module.class, "io/debezium/connector/custom/jdbc/build.version");
 
     public static String version() {
         return INFO.getProperty("version");
@@ -22,7 +22,7 @@ public final class Module {
      * @return symbolic name of the connector plugin
      */
     public static String name() {
-        return "jdbc";
+        return "io.debezium.connector.custom.jdbc";
     }
 
     /**

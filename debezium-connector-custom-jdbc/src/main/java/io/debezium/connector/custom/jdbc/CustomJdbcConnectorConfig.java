@@ -256,7 +256,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     public static final Field JDBC_URI_TEMPLATE = Field.create("jdbc.uri.template")
             .withDisplayName("JDBC URI template")
             .withType(ConfigDef.Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTION, 2))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTION, 3))
             .withWidth(Width.MEDIUM)
             .withImportance(Importance.HIGH)
             .required()
@@ -274,7 +274,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     public static final Field QUERYING_ESCAPE_CHAR_CLOSING = Field.create("querying.escape.char.closing")
             .withDisplayName("Closing escape character")
             .withType(ConfigDef.Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 3))
             .withWidth(Width.SHORT)
             .withImportance(Importance.MEDIUM)
             .required();
@@ -282,7 +282,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     public static final Field QUERYING_BOOLEAN_TRUE_VALUE = Field.create("querying.boolean.true.value")
             .withDisplayName("Value conforming to boolean True")
             .withType(ConfigDef.Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 4))
             .withWidth(Width.MEDIUM)
             .withImportance(Importance.MEDIUM)
             .required();
@@ -290,7 +290,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     public static final Field QUERYING_BOOLEAN_FALSE_VALUE = Field.create("querying.boolean.false.value")
             .withDisplayName("Value conforming to boolean False")
             .withType(ConfigDef.Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 5))
             .withWidth(Width.MEDIUM)
             .withImportance(Importance.MEDIUM)
             .required();
@@ -298,7 +298,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     public static final Field QUERYING_SPECIAL_CHARACTERS = Field.create("querying.special.characters")
             .withDisplayName("Special characters which need escaping")
             .withType(ConfigDef.Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 6))
             .withWidth(Width.MEDIUM)
             .withImportance(Importance.MEDIUM)
             .required();
@@ -306,7 +306,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     public static final Field QUERIES_GET_DATABASE_NAME = Field.create("queries.get.database.name")
             .withDisplayName("Query to retrieve DB name")
             .withType(ConfigDef.Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 7))
             .withWidth(Width.MEDIUM)
             .withImportance(Importance.MEDIUM)
             .required();
@@ -314,7 +314,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     public static final Field QUERIES_GET_TIMESTAMP = Field.create("queries.get.date")
             .withDisplayName("Query to get current timestamp")
             .withType(ConfigDef.Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 8))
             .withWidth(Width.MEDIUM)
             .withImportance(Importance.MEDIUM)
             .required();
@@ -322,7 +322,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     public static final Field QUERIES_PING = Field.create("queries.ping")
             .withDisplayName("Query to check if a connection succeeded")
             .withType(ConfigDef.Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 9))
             .withWidth(Width.MEDIUM)
             .withImportance(Importance.MEDIUM)
             .required();
@@ -330,7 +330,7 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     public static final Field QUERIES_SELECT_FIELDS_FROM_COLLECTION = Field.create("queries.select.fields.from.collection")
             .withDisplayName("Query to select specified fields from collection")
             .withType(ConfigDef.Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 2))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 10))
             .withWidth(Width.MEDIUM)
             .withImportance(Importance.MEDIUM)
             .withDescription("Query template to select specified fields from collection. Use ${fields}, ${collection}, ${schema} to interpolate corresponding values.")
