@@ -260,6 +260,25 @@ include::{partialsdir}/modules/all-connectors/proc-stopping-an-incremental-snaps
 include::{partialsdir}/modules/all-connectors/proc-stopping-an-incremental-snapshot-kafka.adoc[leveloffset=+1]
 
 ifdef::community[]
+[id="postgresql-read-only-incremental-snapshots"]
+==== Read-only incremental snapshots
+
+You can configure a PostgreSQL connector that has a read-only connection to the database to run incremental snapshots without requiring a signal data collection table.
+To run an incremental snapshot with read-only access, the connector uses the current in-progress transaction as high and low watermarks.
+The state of a chunk's window is updated by comparing the transaction ID of write-ahead-log events or heartbeat events against low and high watermarks.
+
+To switch to a read-only implementation, set the value of the xref:postgres-property-read-only[`read.only`] property to `true`.
+
+.Prerequisites
+
+* PostgreSQL version 13 or later.
+
+==== Ad hoc read-only incremental snapshots
+
+When the PostgreSQL connection is read-only, you can use any of the {link-prefix}:{link-signalling}#sending-signals-to-a-debezium-connector[available signaling channels] without the requirement to use the `source` channel.
+endif::community[]
+
+ifdef::community[]
 [[connector-custom-snapshot]]
 === Custom snapshotter SPI
 include::{partialsdir}/modules/all-connectors/custom-snapshotter-spi.adoc[leveloffset=+3]
@@ -3554,7 +3573,7 @@ become outdated if TOASTable columns are dropped from the table.
 |[[postgresql-property-streaming-delay-ms]]<<postgresql-property-streaming-delay-ms, `+streaming.delay.ms+`>>
 |0
 |Specifies the time, in milliseconds, that the connector delays the start of the streaming process after it completes a snapshot.
-Setting a delay interval helps to prevent the connector from restarting snapshots in the event that a failure occurs immediately after the snapshot completes, but before the streaming process begins. 
+Setting a delay interval helps to prevent the connector from restarting snapshots in the event that a failure occurs immediately after the snapshot completes, but before the streaming process begins.
 Set a delay value that is higher than the value of the {link-kafka-docs}/#connectconfigs_offset.flush.interval.ms[`offset.flush.interval.ms`] property that is set for the Kafka Connect worker.
 
 |[[postgresql-property-snapshot-fetch-size]]<<postgresql-property-snapshot-fetch-size, `+snapshot.fetch.size+`>>
@@ -3645,6 +3664,13 @@ After the snapshot completes, {prodname} inserts a second entry to record the cl
 After the snapshot completes, this entry is removed.
 No entry is created for the signal to close the snapshot window.
 Set this option to prevent rapid growth of the signaling data collection.
+
+ifdef::community[]
+|[[postgres-property-read-only]]<<postgres-property-read-only, `+read.only+`>>
+|`false`
+|Specifies whether a connector writes watermarks to the signal data collection to track the progress of an incremental snapshot.
+Set the value to `true` to enable a connector that has a read-only connection to the database to use an incremental snapshot watermarking strategy that does not require writing to the signal data collection.
+endif::community[]
 
 |[[postgresql-property-xmin-fetch-interval-ms]]<<postgresql-property-xmin-fetch-interval-ms, `+xmin.fetch.interval.ms+`>>
 |`0`
@@ -3761,7 +3787,7 @@ The {prodname} PostgreSQL connector provides two types of metrics that are in ad
 
 / Type: concept
 // ModuleID: monitoring-debezium-postgresql-connectors-customized-mbean-names
-// Title: Customized names for Db2 connector snapshot and streaming MBean objects
+// Title: Customized names for PostgreSQL connector snapshot and streaming MBean objects
 === Customized MBean names
 
 include::{partialsdir}/modules/all-connectors/frag-common-mbean-name.adoc[leveloffset=+1,tags=mbeans-shared]
