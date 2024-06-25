@@ -5,22 +5,31 @@
  */
 package io.debezium.connector.custom.jdbc;
 
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.sql.Statement;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.debezium.connector.SnapshotRecord;
+import io.debezium.jdbc.JdbcConnection;
 import io.debezium.jdbc.MainConnectionProvidingConnectionFactory;
 import io.debezium.pipeline.EventDispatcher;
 import io.debezium.pipeline.notification.NotificationService;
 import io.debezium.pipeline.source.SnapshottingTask;
 import io.debezium.pipeline.source.spi.SnapshotProgressListener;
+import io.debezium.pipeline.spi.OffsetContext;
+import io.debezium.relational.Column;
 import io.debezium.relational.RelationalSnapshotChangeEventSource;
 import io.debezium.relational.Table;
 import io.debezium.relational.TableId;
@@ -29,6 +38,9 @@ import io.debezium.schema.SchemaChangeEvent;
 import io.debezium.snapshot.SnapshotterService;
 import io.debezium.spi.schema.DataCollectionId;
 import io.debezium.util.Clock;
+import io.debezium.util.ColumnUtils;
+import io.debezium.util.Strings;
+import io.debezium.util.Threads;
 
 public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChangeEventSource<CustomJdbcPartition, CustomJdbcOffsetContext> {
 
@@ -36,6 +48,8 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
 
     private final CustomJdbcConnectorConfig connectorConfig;
     private final CustomJdbcConnection jdbcConnection;
+
+    protected SnapshotProgressListener<CustomJdbcPartition> snapshotProgressListener;
 
     public CustomJdbcSnapshotChangeEventSource(CustomJdbcConnectorConfig connectorConfig,
                                                MainConnectionProvidingConnectionFactory<CustomJdbcConnection> connectionFactory,
@@ -46,6 +60,7 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
         super(connectorConfig, connectionFactory, schema, dispatcher, clock, snapshotProgressListener, notificationService, snapshotterService);
         this.connectorConfig = connectorConfig;
         this.jdbcConnection = connectionFactory.mainConnection();
+        this.snapshotProgressListener = snapshotProgressListener;
     }
 
     @Override
@@ -230,6 +245,143 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
                         .replace("${fields}", snapshotSelectColumns)
                         .replace("${schema}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.schema()))
                         .replace("${collection}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.table())));
+    }
+
+    @Override
+    protected void doCreateDataEventsForTable(ChangeEventSourceContext sourceContext,
+                                              RelationalSnapshotContext<CustomJdbcPartition, CustomJdbcOffsetContext> snapshotContext,
+                                              CustomJdbcOffsetContext offset,
+                                              EventDispatcher.SnapshotReceiver<CustomJdbcPartition> snapshotReceiver, Table table,
+                                              boolean firstTable, boolean lastTable, int tableOrder, int tableCount, String selectStatement, OptionalLong rowCount,
+                                              JdbcConnection jdbcConnection)
+            throws InterruptedException, SQLException {
+
+        if (!sourceContext.isRunning()) {
+            throw new InterruptedException("Interrupted while snapshotting table " + table.id());
+        }
+
+        long exportStart = clock.currentTimeInMillis();
+        LOGGER.info("Exporting data from table '{}' ({} of {} tables)", table.id(), tableOrder, tableCount);
+
+        Instant sourceTableSnapshotTimestamp = getSnapshotSourceTimestamp(jdbcConnection, offset, table.id());
+
+        try (Statement statement = readTableStatement(jdbcConnection, rowCount);
+                ResultSet rs = resultSetForDataEvents(selectStatement, statement, table)) {
+
+            ColumnUtils.ColumnArray columnArray = columnsToArray(rs, table);
+            long rows = 0;
+            Threads.Timer logTimer = getTableScanLogTimer();
+            boolean hasNext = rs.next();
+
+            if (hasNext) {
+                while (hasNext) {
+                    if (!sourceContext.isRunning()) {
+                        throw new InterruptedException("Interrupted while snapshotting table " + table.id());
+                    }
+
+                    rows++;
+                    final Object[] row = jdbcConnection.rowToArray(table, rs, columnArray);
+
+                    if (logTimer.expired()) {
+                        long stop = clock.currentTimeInMillis();
+                        if (rowCount.isPresent()) {
+                            LOGGER.info("\t Exported {} of {} records for table '{}' after {}", rows, rowCount.getAsLong(),
+                                    table.id(), Strings.duration(stop - exportStart));
+                        }
+                        else {
+                            LOGGER.info("\t Exported {} records for table '{}' after {}", rows, table.id(),
+                                    Strings.duration(stop - exportStart));
+                        }
+                        snapshotProgressListener.rowsScanned(snapshotContext.partition, table.id(), rows);
+                        logTimer = getTableScanLogTimer();
+                    }
+
+                    hasNext = rs.next();
+                    setSnapshotMarker(offset, firstTable, lastTable, rows == 1, !hasNext);
+
+                    dispatcher.dispatchSnapshotEvent(snapshotContext.partition, table.id(),
+                            getChangeRecordEmitter(snapshotContext.partition, offset, table.id(), row, sourceTableSnapshotTimestamp), snapshotReceiver);
+                }
+            }
+            else {
+                setSnapshotMarker(offset, firstTable, lastTable, false, true);
+            }
+
+            LOGGER.info("\t Finished exporting {} records for table '{}' ({} of {} tables); total duration '{}'",
+                    rows, table.id(), tableOrder, tableCount, Strings.duration(clock.currentTimeInMillis() - exportStart));
+            snapshotProgressListener.dataCollectionSnapshotCompleted(snapshotContext.partition, table.id(), rows);
+            notificationService.initialSnapshotNotificationService().notifyCompletedTableSuccessfully(snapshotContext.partition,
+                    snapshotContext.offset, table.id().identifier(), rows, snapshotContext.capturedTables);
+        }
+    }
+
+    private ColumnUtils.ColumnArray columnsToArray(ResultSet resultSet, Table table) throws SQLException {
+        ResultSetMetaData metaData = resultSet.getMetaData();
+
+        Column[] columns = new Column[metaData.getColumnCount()];
+
+        int greatestColumnPosition = 0;
+
+        for (int i = 0; i < columns.length; i++) {
+            final String columnName = metaData.getColumnName(i + 1);
+
+            columns[i] = table.columns().get(i);
+
+            if (columns[i] == null) {
+                // This situation can happen when SQL Server and Db2 schema is changed before
+                // an incremental snapshot is started and no event with the new schema has been
+                // streamed yet.
+                // This warning will help to identify the issue in case of a support request.
+
+                final String[] resultSetColumns = new String[metaData.getColumnCount()];
+
+                for (int j = 0; j < metaData.getColumnCount(); j++) {
+                    resultSetColumns[j] = metaData.getColumnName(j + 1);
+                }
+
+                throw new IllegalArgumentException("Column '"
+                        + columnName
+                        + "' not found in result set '"
+                        + String.join(", ", resultSetColumns)
+                        + "' for table '"
+                        + table.id()
+                        + "', "
+                        + table
+                        + ". This might be caused by DBZ-4350");
+            }
+
+            greatestColumnPosition = Math.max(greatestColumnPosition, columns[i].position());
+        }
+
+        return new ColumnUtils.ColumnArray(columns, greatestColumnPosition);
+    }
+
+    protected Threads.Timer getTableScanLogTimer() {
+        return Threads.timer(clock, LOG_INTERVAL);
+    }
+
+    protected void setSnapshotMarker(OffsetContext offset, boolean firstTable, boolean lastTable, boolean firstRecordInTable,
+                                     boolean lastRecordInTable) {
+        if (lastRecordInTable && lastTable) {
+            offset.markSnapshotRecord(SnapshotRecord.LAST);
+        }
+        else if (firstRecordInTable && firstTable) {
+            offset.markSnapshotRecord(SnapshotRecord.FIRST);
+        }
+        else if (lastRecordInTable) {
+            offset.markSnapshotRecord(SnapshotRecord.LAST_IN_DATA_COLLECTION);
+        }
+        else if (firstRecordInTable) {
+            offset.markSnapshotRecord(SnapshotRecord.FIRST_IN_DATA_COLLECTION);
+        }
+        else {
+            offset.markSnapshotRecord(SnapshotRecord.TRUE);
+        }
+    }
+
+    protected ResultSet resultSetForDataEvents(String selectStatement, Statement statement, Table table)
+            throws SQLException {
+        return CustomJdbcResultSet.from(statement.executeQuery(selectStatement), table);
     }
 
     /**
