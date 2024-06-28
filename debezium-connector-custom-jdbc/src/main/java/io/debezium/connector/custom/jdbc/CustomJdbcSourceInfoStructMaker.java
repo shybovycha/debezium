@@ -11,6 +11,7 @@ import org.apache.kafka.connect.data.Struct;
 
 import io.debezium.config.CommonConnectorConfig;
 import io.debezium.connector.AbstractSourceInfoStructMaker;
+import io.debezium.relational.TableId;
 
 public class CustomJdbcSourceInfoStructMaker extends AbstractSourceInfoStructMaker<SourceInfo> {
 
@@ -38,9 +39,17 @@ public class CustomJdbcSourceInfoStructMaker extends AbstractSourceInfoStructMak
         final Struct ret = super.commonStruct(sourceInfo);
 
         if (sourceInfo.getTableId() != null) {
-            ret
-                    .put(SourceInfo.SCHEMA_NAME_KEY, sourceInfo.getTableId().schema())
-                    .put(SourceInfo.TABLE_NAME_KEY, sourceInfo.getTableId().table());
+            TableId tableId = sourceInfo.getTableId();
+
+            if (tableId.catalog() != null) {
+                ret.put(SourceInfo.DATABASE_NAME_KEY, tableId.catalog());
+            }
+
+            if (tableId.schema() != null) {
+                ret.put(SourceInfo.SCHEMA_NAME_KEY, sourceInfo.getTableId().schema());
+            }
+
+            ret.put(SourceInfo.TABLE_NAME_KEY, sourceInfo.getTableId().table());
         }
         if (sourceInfo.getChangeLsn() != null && sourceInfo.getChangeLsn().isAvailable()) {
             ret.put(SourceInfo.CHANGE_LSN_KEY, sourceInfo.getChangeLsn().toString());

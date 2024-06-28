@@ -7,6 +7,7 @@ package io.debezium.connector.custom.jdbc;
 
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -157,14 +158,40 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
                                       RelationalSnapshotContext<CustomJdbcPartition, CustomJdbcOffsetContext> snapshotContext,
                                       CustomJdbcOffsetContext previousOffset, SnapshottingTask snapshottingTask)
             throws SQLException, InterruptedException {
-        Set<String> schemas = snapshotContext.capturedTables.stream()
-                .map(TableId::schema)
-                .collect(Collectors.toSet());
+        Set<String> visitedSchemas = new HashSet<>();
+        Set<String> visitedCatalogs = new HashSet<>();
 
         // reading info only for the schemas we're interested in as per the set of captured tables;
         // while the passed table name filter alone would skip all non-included tables, reading the schema
         // would take much longer that way
-        for (String schema : schemas) {
+        for (TableId tableId : snapshotContext.capturedTables) {
+            String schema = tableId.schema();
+            String catalog = tableId.catalog();
+
+            if (connectorConfig.usesCatalog() && connectorConfig.usesSchema()) {
+                if (visitedCatalogs.contains(catalog) && visitedSchemas.contains(schema)) {
+                    continue;
+                }
+            }
+            else if (connectorConfig.usesCatalog() && !connectorConfig.usesSchema()) {
+                if (visitedCatalogs.contains(catalog)) {
+                    continue;
+                }
+            }
+            else if (!connectorConfig.usesCatalog() && connectorConfig.usesSchema()) {
+                if (visitedSchemas.contains(catalog)) {
+                    continue;
+                }
+            }
+
+            if (connectorConfig.usesCatalog()) {
+                visitedCatalogs.add(catalog);
+            }
+
+            if (connectorConfig.usesSchema()) {
+                visitedSchemas.add(schema);
+            }
+
             if (!sourceContext.isRunning()) {
                 throw new InterruptedException("Interrupted while reading structure of schema " + schema);
             }
@@ -180,8 +207,8 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
             jdbcConnection.connection().setAutoCommit(true);
             jdbcConnection.readSchema(
                     snapshotContext.tables,
-                    null,
-                    schema,
+                    connectorConfig.usesCatalog() ? catalog : null,
+                    connectorConfig.usesSchema() ? schema : null,
                     tableFilter,
                     null,
                     false);
@@ -228,7 +255,8 @@ public class CustomJdbcSnapshotChangeEventSource extends RelationalSnapshotChang
         return Optional.of(
                 queryTemplate
                         .replace("${fields}", snapshotSelectColumns)
-                        .replace("${schema}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.schema()))
+                        .replace("${schema}",
+                                CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.schema() == null ? tableId.catalog() : tableId.schema()))
                         .replace("${collection}", CustomJdbcObjectNameQuoter.create(connectorConfig).quoteNameIfNecessary(tableId.table())));
     }
 

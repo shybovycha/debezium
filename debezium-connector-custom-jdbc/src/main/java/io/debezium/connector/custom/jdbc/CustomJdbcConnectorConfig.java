@@ -336,6 +336,24 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
             .withDescription("Query template to select specified fields from collection. Use ${fields}, ${collection}, ${schema} to interpolate corresponding values.")
             .required();
 
+    public static final Field USES_DATABASE_CATALOG = Field.create("tableid.use.catalog")
+            .withDisplayName("Use catalog (DB name) when referring to tables")
+            .withType(ConfigDef.Type.BOOLEAN)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 11))
+            .withWidth(Width.SHORT)
+            .withDefault(false)
+            .withImportance(Importance.MEDIUM)
+            .required();
+
+    public static final Field USES_DATABASE_SCHEMA = Field.create("tableid.use.schema")
+            .withDisplayName("Use schema when referring to tables")
+            .withType(ConfigDef.Type.BOOLEAN)
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT, 12))
+            .withWidth(Width.SHORT)
+            .withDefault(true)
+            .withImportance(Importance.MEDIUM)
+            .required();
+
     public static final Field SOURCE_INFO_STRUCT_MAKER = CommonConnectorConfig.SOURCE_INFO_STRUCT_MAKER
             .withDefault(CustomJdbcSourceInfoStructMaker.class.getName());
 
@@ -364,7 +382,9 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
                     QUERIES_GET_DATABASE_NAME,
                     QUERIES_GET_TIMESTAMP,
                     QUERIES_PING,
-                    QUERIES_SELECT_FIELDS_FROM_COLLECTION)
+                    QUERIES_SELECT_FIELDS_FROM_COLLECTION,
+                    USES_DATABASE_CATALOG,
+                    USES_DATABASE_SCHEMA)
             .events(SOURCE_INFO_STRUCT_MAKER)
             .excluding(
                     SCHEMA_INCLUDE_LIST,
@@ -389,20 +409,34 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
     private final String databaseName;
     private final SnapshotMode snapshotMode;
     private final SnapshotIsolationMode snapshotIsolationMode;
+    private final boolean usesCatalog;
+    private final boolean usesSchema;
 
     public CustomJdbcConnectorConfig(Configuration config) {
         super(
                 CustomJdbcConnector.class,
                 config,
-                new SystemTablesPredicate(),
-                x -> x.schema() + "." + x.table(),
-                false,
+                new IncludeAllTablesPredicate(),
+                x -> {
+                    if (x.schema() == null) {
+                        if (x.catalog() != null) {
+                            return x.catalog() + "." + x.table();
+                        }
+
+                        return x.schema() + "." + x.table();
+                    }
+
+                    return x.catalog() + "." + x.schema() + "." + x.table();
+                },
+                config.getBoolean(USES_DATABASE_CATALOG),
                 ColumnFilterMode.SCHEMA,
                 false);
 
         this.databaseName = config.getString(DATABASE_NAME);
         this.snapshotMode = SnapshotMode.parse(config.getString(SNAPSHOT_MODE), SNAPSHOT_MODE.defaultValueAsString());
         this.snapshotIsolationMode = SnapshotIsolationMode.parse(config.getString(SNAPSHOT_ISOLATION_MODE), SNAPSHOT_ISOLATION_MODE.defaultValueAsString());
+        this.usesSchema = config.getBoolean(USES_DATABASE_SCHEMA);
+        this.usesCatalog = config.getBoolean(USES_DATABASE_CATALOG);
     }
 
     public String getDatabaseName() {
@@ -411,6 +445,14 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
 
     public SnapshotMode getSnapshotMode() {
         return snapshotMode;
+    }
+
+    public boolean usesCatalog() {
+        return usesCatalog;
+    }
+
+    public boolean usesSchema() {
+        return usesSchema;
     }
 
     @Override
@@ -423,12 +465,11 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
         return getSourceInfoStructMaker(SOURCE_INFO_STRUCT_MAKER, Module.name(), Module.version(), this);
     }
 
-    private static class SystemTablesPredicate implements TableFilter {
+    private static class IncludeAllTablesPredicate implements TableFilter {
 
         @Override
         public boolean isIncluded(TableId t) {
-            return t.schema() != null;
-
+            return true;
         }
     }
 
