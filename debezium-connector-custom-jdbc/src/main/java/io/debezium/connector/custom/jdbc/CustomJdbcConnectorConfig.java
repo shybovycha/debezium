@@ -426,7 +426,11 @@ public class CustomJdbcConnectorConfig extends HistorizedRelationalDatabaseConne
                         return x.schema() + "." + x.table();
                     }
 
-                    return x.catalog() + "." + x.schema() + "." + x.table();
+                    if (x.catalog() != null) {
+                        return x.catalog() + "." + x.schema() + "." + x.table();
+                    }
+
+                    return x.schema() + "." + x.table();
                 },
                 config.getBoolean(USES_DATABASE_CATALOG),
                 ColumnFilterMode.SCHEMA,
